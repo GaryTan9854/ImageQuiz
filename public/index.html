@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Image Quiz Machine · 圖片抽考機</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#128444;</text></svg>">
+  <script>try{var t=localStorage.getItem('iq_theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+  <link rel="stylesheet" href="css/style.css?v=1">
+</head>
+<body>
+  <header class="topbar">
+    <button class="homebtn hidden" id="homeBtn" title="回首頁">←</button>
+    <div class="brand" id="brand" role="button" tabindex="0">
+      <span class="logo">🖼️</span>
+      <span class="name">ImageQuiz</span>
+      <span class="ver" id="ver"></span>
+    </div>
+    <div class="sub">圖片抽考機</div>
+    <button class="themebtn" id="themeBtn" title="切換深色／淺色" aria-label="切換深色／淺色"></button>
+  </header>
+
+  <main id="app">
+    <!-- ============ 首頁 ============ -->
+    <section id="view-home" class="view">
+      <p class="home-lead">選一個功能開始（可用 ↑ ↓ ← → 移動，Enter 選擇）</p>
+      <div class="home-grid" id="homeGrid"></div>
+      <div class="lib-bar" id="libBar"></div>
+    </section>
+
+    <!-- ============ 上傳資料夾 ============ -->
+    <section id="view-setup" class="view hidden">
+      <h1>📂 上傳圖片資料夾</h1>
+      <p class="lead">把整理好的資料夾丟進來，資料夾名稱就是答案，馬上變成你的抽考題庫。</p>
+
+      <section class="card">
+        <div class="guide">
+          <strong>💡 資料夾結構與命名規則</strong>
+          <p>照這樣整理，就能依「分類」篩選範圍、用「答案名」自動出題：</p>
+          <pre class="tree">Hematology（任何主題）      ← 上傳這一層
+├── RBC morphology/         ← 第 1 層：分類（考試範圍）
+│    ├── Howell-Jolly Body/ ← 第 2 層：答案名（可放多張圖）
+│    │    ├── 01.jpg
+│    │    └── 02.png        ← 第 3 層：檔名隨便取，不影響
+│    └── Keratocyte/
+│         └── 01.webp
+└── WBC morphology/         ← 第 1 層：分類
+     └── Lymphocyte/
+          └── 01.jpg</pre>
+          <ul>
+            <li><strong>分類（第 1 層）</strong>：抽考時可勾選的範圍。</li>
+            <li><strong>答案名（第 2 層）</strong>：資料夾名稱＝正確答案；同一答案可放多張圖，抽考時隨機挑一張。</li>
+            <li>少一層也可以：<code>資料夾/答案名/圖.jpg</code> 會全部歸到「未分類」。</li>
+            <li>支援 jpg / png / gif / webp / bmp / avif；<strong>HEIC 只有 Safari 讀得到</strong>，建議先轉 JPEG。</li>
+            <li>圖只留在你的瀏覽器（IndexedDB），<strong>不會上傳到伺服器</strong>。</li>
+          </ul>
+        </div>
+
+        <label class="uploadbtn" id="uploadLabel" data-cursor tabindex="0">
+          <input type="file" id="folderInput" webkitdirectory directory multiple hidden>
+          <span id="uploadText">📂 點這裡選擇資料夾</span>
+        </label>
+        <p class="hint" id="fileCount"></p>
+        <button id="startBtn" class="btn primary" data-cursor disabled>開始使用</button>
+      </section>
+    </section>
+
+    <!-- ============ 瀏覽 ============ -->
+    <section id="view-browse" class="view hidden">
+      <h1>瀏覽圖庫</h1>
+      <p class="crumb" id="browseCrumb"></p>
+      <div class="browse-wrap">
+        <aside class="sidebar" id="catList"></aside>
+        <div class="gallery" id="gallery"></div>
+      </div>
+    </section>
+
+    <!-- ============ 抽考 ============ -->
+    <section id="view-quiz" class="view hidden">
+      <section id="quizSetup" class="card">
+        <h1>圖片抽考</h1>
+        <p class="lead">看圖選答案，四選一。選好範圍與題數就開始！</p>
+        <div class="field">
+          <div class="field-head">
+            <span>分類範圍（勾選要考的類型）</span>
+            <button type="button" id="toggleAll" class="linkbtn" data-cursor>全不選</button>
+          </div>
+          <div class="cats-grid" id="scopeBoxes"></div>
+        </div>
+        <label class="field">
+          <span>題數</span>
+          <div class="chips" id="rounds"></div>
+        </label>
+        <button id="quizStartBtn" class="btn primary" data-cursor>開始抽考</button>
+        <p class="hint" id="poolInfo"></p>
+      </section>
+
+      <section id="game" class="card hidden">
+        <div class="game-top">
+          <span class="progress" id="progress"></span>
+          <span class="catbadge" id="catBadge"></span>
+          <span class="score" id="score"></span>
+        </div>
+        <div class="imgwrap" id="imgwrap"></div>
+        <p class="q">這是什麼？</p>
+        <div class="choices" id="choices"></div>
+        <div class="feedback" id="feedback"></div>
+        <div class="nav-row">
+          <button id="nextBtn" class="btn nav hidden" data-cursor>下一題 →</button>
+        </div>
+        <p class="kbd-hint">鍵盤：↑ ↓ ← → 選答案，Enter 作答／下一題，或直接按 1 ~ 4；ESC 離開</p>
+      </section>
+
+      <section id="result" class="card hidden">
+        <h1 id="resultTitle"></h1>
+        <p class="bigscore" id="finalScore"></p>
+        <div id="review" class="review"></div>
+        <button id="againBtn" class="btn primary" data-cursor>再玩一次</button>
+      </section>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div id="visits"></div>
+    <div>ImageQuiz · 圖片抽考機 · <a href="https://medtech.visadelab.xyz">MedTech</a> · visadelab</div>
+  </footer>
+
+  <script src="js/tunacursor.js?v=1"></script>
+  <script src="js/app.js?v=1"></script>
+</body>
+</html>

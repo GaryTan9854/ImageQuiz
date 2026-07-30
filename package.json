@@ -1,0 +1,14 @@
+{
+  "name": "imagequiz",
+  "version": "0.1.0",
+  "build": "0",
+  "private": true,
+  "description": "Image Quiz Machine 圖片抽考機 — 上傳自己的圖庫資料夾即可抽考（visadelab）",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=22.5"
+  }
+}
