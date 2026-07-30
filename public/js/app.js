@@ -260,7 +260,7 @@ function closeLightbox() {
 const ROUNDS = [10, 20, 30, 0];       // 0 = 無限
 let scope = null;                      // Set of category names
 let rounds = 10;
-let pool = [], qIdx = 0, correct = 0, cur = null, answered = false, wrongs = [];
+let pool = [], qIdx = 0, asked = 0, correct = 0, cur = null, answered = false, wrongs = [];
 
 function renderQuizSetup() {
   const cats = catNames();
@@ -318,10 +318,11 @@ function updatePoolInfo() {
 function startQuiz() {
   pool = scopeItems();
   if (new Set(pool.map((i) => i.answer)).size < 4) return;
-  qIdx = 0; correct = 0; wrongs = [];
+  qIdx = 0; asked = 0; correct = 0; wrongs = [];
   $('quizSetup').classList.add('hidden');
   $('result').classList.add('hidden');
   $('game').classList.remove('hidden');
+  $('endBtn').classList.toggle('hidden', !!rounds);      // 無限模式才需要「結束」鈕
   nextQuestion();
 }
 
@@ -353,13 +354,12 @@ function renderChoices() {
   shuffle(sameCat);
   let wrong = sameCat.slice(0, 3);
   if (wrong.length < 3) {                                  // 同分類不夠 → 從其他選取分類補
-    const others = [];
+    const others = new Set();                              // 用 Set 去重：不同分類可能有同名答案
     scope.forEach((c) => {
       if (!LIB.cats[c]) return;
-      LIB.cats[c].answers.forEach((a) => { if (a !== cur.answer && !wrong.includes(a)) others.push(a); });
+      LIB.cats[c].answers.forEach((a) => { if (a !== cur.answer && !wrong.includes(a)) others.add(a); });
     });
-    shuffle(others);
-    wrong = wrong.concat(others.slice(0, 3 - wrong.length));
+    wrong = wrong.concat(shuffle([...others]).slice(0, 3 - wrong.length));
   }
   const opts = shuffle([cur.answer, ...wrong]);
 
@@ -374,6 +374,8 @@ function answer(picked, btn) {
   answered = true;
   const btns = $('choices').querySelectorAll('.opt');
   btns.forEach((b) => { b.disabled = true; });
+
+  asked++;
 
   if (picked === cur.answer) {
     correct++;
@@ -395,8 +397,9 @@ function answer(picked, btn) {
 
 function showResult() {
   $('game').classList.add('hidden');
+  $('endBtn').classList.add('hidden');
   $('result').classList.remove('hidden');
-  const done = rounds ? rounds : qIdx - 1;
+  const done = asked;
   const pct = done ? Math.round((correct / done) * 100) : 0;
   $('resultTitle').textContent = pct >= 90 ? '🏆 太強了！' : pct >= 70 ? '👍 不錯喔' : pct >= 50 ? '🙂 再練練' : '💪 多看幾遍';
   $('finalScore').textContent = `${correct} / ${done}　(${pct}%)`;
@@ -468,6 +471,7 @@ window.addEventListener('keydown', (e) => {
   $('brand').onkeydown = (e) => { if (e.key === 'Enter') location.hash = '#home'; };
   $('homeBtn').onclick = () => { location.hash = '#home'; };
   $('nextBtn').onclick = () => { (rounds && qIdx >= rounds) ? showResult() : nextQuestion(); };
+  $('endBtn').onclick = () => showResult();
   initSetup();
 
   fetch('/api/health').then((r) => r.json()).then((h) => { $('ver').textContent = 'v' + h.version; }).catch(() => {});
