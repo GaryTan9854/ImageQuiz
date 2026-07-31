@@ -217,9 +217,12 @@ h1 { font-size: 22px; margin: 0 0 6px; }
   :root:not([data-theme]) .opt.correct { background: rgba(34,197,94,.16); color: #15803d; }
   :root:not([data-theme]) .opt.wrong { background: rgba(239,68,68,.12); color: #b91c1c; }
   :root:not([data-theme]) .tree { background: #0f2233; color: #dbeafe; }
+  /* topbar 底色是寫死的深色，淺色模式要一起翻，否則深底配深字看不清 */
+  :root:not([data-theme]) .topbar { background: rgba(255,255,255,.82); }
 }
 :root[data-theme="light"] { --bg:#eef3f8; --card:#fff; --card2:#f1f5f9; --line:#d8e2ec; --text:#0f2233; --muted:#5a7186; }
 :root[data-theme="light"] body { background: radial-gradient(1200px 600px at 50% -10%, #dbeafe 0%, var(--bg) 60%); }
 :root[data-theme="light"] .opt.correct { background: rgba(34,197,94,.16); color: #15803d; }
 :root[data-theme="light"] .opt.wrong { background: rgba(239,68,68,.12); color: #b91c1c; }
 :root[data-theme="light"] .tree { background: #0f2233; color: #dbeafe; }
+:root[data-theme="light"] .topbar { background: rgba(255,255,255,.82); }
