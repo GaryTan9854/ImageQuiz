@@ -398,6 +398,7 @@ function answer(picked, btn) {
 function showResult() {
   $('game').classList.add('hidden');
   $('endBtn').classList.add('hidden');
+  window.scrollTo(0, 0);                                  // 成績單從頭看起
   $('result').classList.remove('hidden');
   const done = asked;
   const pct = done ? Math.round((correct / done) * 100) : 0;

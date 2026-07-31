@@ -1,7 +1,7 @@
 {
   "name": "imagequiz",
-  "version": "0.2.3",
-  "build": "5",
+  "version": "0.2.4",
+  "build": "6",
   "private": true,
   "description": "Image Quiz Machine 圖片抽考機 — 上傳自己的圖庫資料夾即可抽考（visadelab）",
   "main": "server.js",
