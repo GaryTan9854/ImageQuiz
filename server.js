@@ -68,7 +68,12 @@ const server = http.createServer((req, res) => {
     if (err) { res.writeHead(404); return res.end('not found'); }
     res.writeHead(200, {
       'Content-Type': MIME[ext] || 'application/octet-stream',
-      'Cache-Control': noStore ? 'no-store, must-revalidate' : 'public, max-age=86400',
+      // ★★ PWA 的圖示與 manifest 不可以吃長快取：Cloudflare 會把舊圖留住整整一天
+      //    （Parasitology/histology 是七天），換了圖在手機上完全看不出來，也沒有任何錯誤。
+      //    2026-09-20 踩過：TunaVocab 換成同心圓後線上還在送舊的 A。這些檔很小又少人抓。
+      'Cache-Control': noStore ? 'no-store, must-revalidate'
+        : /^(icon-.*\.png|pwa-manifest\.json|manifest\.json)$/.test(require('node:path').basename(fp)) ? 'no-cache'
+        : 'public, max-age=86400',
     });
     res.end(data);
   });
