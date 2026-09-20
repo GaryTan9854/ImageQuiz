@@ -7,6 +7,22 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#128444;</text></svg>">
   <script>try{var t=localStorage.getItem('iq_theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
   <link rel="stylesheet" href="css/style.css?v=2">
+<!-- PWA:visadelab —— 由 ~/Documents/.claude/skills/pwa-app 產生，改 apps.js 後重跑 stamp.js，勿手改。
+     ★★ crossorigin="use-credentials" 不可拿掉：瀏覽器抓 manifest 預設「不帶 cookie」，
+        站台若在 Cloudflare Access 後面就會拿到一張 302 的 HTML、manifest 解析失敗，
+        主畫面圖示無聲地退回用 <title> ＋ favicon。公開站帶著也無害（同源），所以一律加。
+     ★ apple-touch-icon 不帶 ?v=：iOS 在「加入主畫面」那一刻抓一次就長久留著，
+        帶查詢字串在部分版本會被當成抓不到而退回用網頁截圖。
+     ★ 邏輯放外部 /pwa.js 不寫行內：TunaSpend 的 CSP 沒有 unsafe-inline。 -->
+<link rel="manifest" href="/manifest.json" crossorigin="use-credentials">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<meta name="theme-color" id="pwaTheme" content="#0f2233">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ImageQuiz">
+<script src="/pwa.js" defer></script>
+<!-- /PWA:visadelab -->
 </head>
 <body>
   <header class="topbar">
