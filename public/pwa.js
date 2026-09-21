@@ -30,39 +30,78 @@
   function byId() { return document.getElementById("pwaInstall"); }
 
   function css(el, o) { for (var k in o) el.style[k] = o[k]; }
-  function show() {
-    if (byId() || !evt) return;
-    try { if (localStorage.getItem("pwa.install.dismissed") === "1") return; } catch (e) {}
-    if (document.readyState === "loading" || !document.body)
-      return addEventListener("DOMContentLoaded", show);
-
+  /** 右下角那顆膠囊：內容由呼叫端塞；✕ 會記住「不要再問」（key 各自分開）。 */
+  function pill(dismissKey) {
     var w = document.createElement("div");
     w.id = "pwaInstall";
     css(w, {
-      position: "fixed", right: "14px",
+      position: "fixed", right: "14px", left: "auto", maxWidth: "calc(100vw - 28px)",
       bottom: "calc(14px + env(safe-area-inset-bottom))",
-      zIndex: "2147483000", display: "flex", gap: "2px", alignItems: "center",
+      zIndex: "2147483000", display: "flex", gap: "4px", alignItems: "center",
       background: PILL_BG, color: PILL_FG, borderRadius: "999px",
       padding: "9px 8px 9px 15px", boxShadow: "0 6px 20px rgba(0,0,0,.3)",
-      font: '13px/1 -apple-system,"PingFang TC",sans-serif',
+      font: '13px/1.3 -apple-system,"PingFang TC",sans-serif',
     });
-    var b = document.createElement("button");
-    b.textContent = "安裝 App";
-    css(b, { all: "unset", cursor: "pointer", font: "inherit", color: "inherit" });
-    b.onclick = function () {
-      if (!evt) return;
-      evt.prompt();
-      evt.userChoice.then(function () { evt = null; w.remove(); });
-    };
     var x = document.createElement("button");
     x.textContent = "✕"; x.title = "不要再問";
     css(x, { all: "unset", cursor: "pointer", font: "inherit", color: "inherit",
-             opacity: ".6", padding: "0 6px" });
+             opacity: ".6", padding: "0 6px", flex: "none" });
     x.onclick = function () {
-      try { localStorage.setItem("pwa.install.dismissed", "1"); } catch (e) {}
+      try { localStorage.setItem(dismissKey, "1"); } catch (e) {}
       w.remove();
     };
-    w.appendChild(b); w.appendChild(x); document.body.appendChild(w);
+    return { box: w, close: x };
+  }
+  function dismissed(key) { try { return localStorage.getItem(key) === "1"; } catch (e) { return false; } }
+  function whenBody(fn) {
+    if (document.readyState === "loading" || !document.body) addEventListener("DOMContentLoaded", fn);
+    else fn();
+  }
+
+  function show() {
+    if (byId() || !evt || dismissed("pwa.install.dismissed")) return;
+    whenBody(function () {
+      if (byId() || !evt) return;
+      var p = pill("pwa.install.dismissed");
+      var b = document.createElement("button");
+      b.textContent = "安裝 App";
+      css(b, { all: "unset", cursor: "pointer", font: "inherit", color: "inherit" });
+      b.onclick = function () {
+        if (!evt) return;
+        evt.prompt();
+        evt.userChoice.then(function () { evt = null; p.box.remove(); });
+      };
+      p.box.appendChild(b); p.box.appendChild(p.close); document.body.appendChild(p.box);
+    });
+  }
+
+  // ── iPhone／iPad：★★ 蘋果規定 iOS 上**所有**瀏覽器（連 Chrome）都用 WebKit，
+  //    沒有一個會發 beforeinstallprompt ⇒ 上面那顆鈕在 iOS 永遠不會出現，
+  //    而使用者也不會知道要去哪裡按（2026-09-21 Gary 太太的 iPhone 上：「我沒看到可以變成 App 的按鍵」）。
+  //    iOS 唯一的安裝路徑是「分享 → 加入主畫面」，所以改成提示那一步。
+  var isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+              (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);   // iPadOS 會裝成 Mac
+  var installed = navigator.standalone === true ||
+                  (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
+  if (isIOS && !installed && !dismissed("pwa.ios.dismissed")) {
+    whenBody(function () {
+      if (byId()) return;
+      var p = pill("pwa.ios.dismissed");
+      var t = document.createElement("span");
+      t.appendChild(document.createTextNode("裝成 App：點 "));
+      // iOS 的「分享」圖示（方框＋向上箭頭）；用 DOM 建，不走 innerHTML（CSP）
+      var NS = "http://www.w3.org/2000/svg", svg = document.createElementNS(NS, "svg");
+      svg.setAttribute("viewBox", "0 0 24 24"); svg.setAttribute("width", "15"); svg.setAttribute("height", "15");
+      svg.setAttribute("fill", "none"); svg.setAttribute("stroke", "currentColor"); svg.setAttribute("stroke-width", "2.2");
+      svg.setAttribute("stroke-linecap", "round"); svg.setAttribute("stroke-linejoin", "round");
+      ["M12 3v12", "M8 7l4-4 4 4", "M5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8"].forEach(function (d) {
+        var path = document.createElementNS(NS, "path"); path.setAttribute("d", d); svg.appendChild(path);
+      });
+      css(svg, { verticalAlign: "-2px", margin: "0 1px" });
+      t.appendChild(svg);
+      t.appendChild(document.createTextNode(" 再選「加入主畫面」"));
+      p.box.appendChild(t); p.box.appendChild(p.close); document.body.appendChild(p.box);
+    });
   }
 
   if ("serviceWorker" in navigator)
